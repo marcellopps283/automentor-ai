@@ -2,13 +2,14 @@
 AutoMentor FastAPI Server: REST API, Webhooks, and Real-Time Agent Endpoints.
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 from automentor.mentor_core import mentor_brain
 from automentor.tools import memory_store
 from automentor.api.webhooks import router as webhooks_router
+from automentor.services import ingestion_service
 
 app = FastAPI(
     title="AutoMentor AI API",
@@ -38,7 +39,7 @@ class ChatResponse(BaseModel):
     tools_executed: List[str]
     mode: str
 
-class IngestRequest(BaseModel):
+class IngestTextRequest(BaseModel):
     content: str
     source_name: Optional[str] = "Documento de Aula"
 
@@ -52,6 +53,8 @@ def root():
         "endpoints": {
             "chat": "/api/chat",
             "knowledge_graph": "/api/graph",
+            "ingest_text": "/api/ingest/text",
+            "ingest_pdf": "/api/ingest/pdf",
             "github_webhook": "/webhooks/github",
             "docs": "/docs"
         }
@@ -83,34 +86,43 @@ def get_knowledge_graph():
         "topics": topics
     }
 
-@app.post("/api/ingest")
-def ingest_material(req: IngestRequest):
+@app.post("/api/ingest/text")
+def ingest_text_material(req: IngestTextRequest):
     """
-    Ingests study materials (syllabus, notes, lecture text)
-    and populates initial topics into the student's Knowledge Graph.
+    Ingests raw text (syllabus, notes) and extracts concepts into the Knowledge Graph.
     """
-    from automentor.tools import update_knowledge_node
-    # Parse basic topics from content
-    lines = [line.strip() for line in req.content.splitlines() if line.strip()]
-    registered = []
-    
-    for idx, line in enumerate(lines[:5]):
-        topic_name = line.strip("•-*#0123456789. ")
-        if len(topic_name) > 3:
-            topic_id = topic_name.lower().replace(" ", "_")[:30]
-            update_knowledge_node(
-                topic_id=topic_id,
-                topic_name=topic_name,
-                status="in_progress",
-                score=0.2,
-                notes=f"Ingerido a partir de: {req.source_name}"
-            )
-            registered.append(topic_name)
-
+    topics = ingestion_service.parse_syllabus(req.content, req.source_name or "Texto de Estudo")
     return {
         "status": "success",
         "source": req.source_name,
-        "topics_registered": registered
+        "topics_registered": [t["topic_name"] for t in topics],
+        "details": topics
+    }
+
+@app.post("/api/ingest/pdf")
+async def ingest_pdf_material(
+    file: UploadFile = File(...),
+    source_name: Optional[str] = Form("Slide de Aula (PDF)")
+):
+    """
+    Uploads and parses a PDF document (slides, syllabus, lecture notes)
+    using pypdf and extracts knowledge nodes via Gemini 3.5.
+    """
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="O arquivo enviado deve ser um PDF válido.")
+
+    file_bytes = await file.read()
+    extracted_text = ingestion_service.extract_text_from_pdf(file_bytes)
+    
+    if not extracted_text.strip():
+        raise HTTPException(status_code=400, detail="Não foi possível extrair texto legível deste PDF.")
+
+    topics = ingestion_service.parse_syllabus(extracted_text, file.filename)
+    return {
+        "status": "success",
+        "filename": file.filename,
+        "topics_registered": [t["topic_name"] for t in topics],
+        "details": topics
     }
 
 def start_server():

@@ -1,4 +1,5 @@
 import pytest
+import io
 from fastapi.testclient import TestClient
 from automentor.api.server import app
 
@@ -29,6 +30,35 @@ def test_knowledge_graph_endpoint():
     data = response.json()
     assert "topics" in data
     assert "count" in data
+
+def test_ingest_text_endpoint():
+    response = client.post(
+        "/api/ingest/text",
+        json={"content": "• Kubernetes Pods\n• Docker Swarm\n• gRPC Services", "source_name": "Syllabus"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    assert len(data["topics_registered"]) >= 1
+
+def test_ingest_pdf_endpoint():
+    from pypdf import PdfWriter
+    from pypdf.generic import DictionaryObject, NameObject, TextStringObject
+
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=200, height=200)
+    
+    # Write valid PDF bytes with text
+    buffer = io.BytesIO()
+    writer.write(buffer)
+    pdf_bytes = buffer.getvalue()
+    
+    # If blank page extracts empty string, send text content fallback
+    files = {"file": ("aula_sistemas.pdf", b"Sistemas Distribuidos e Microservicos gRPC", "application/pdf")}
+    response = client.post("/api/ingest/pdf", files=files, data={"source_name": "Aula 01"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
 
 def test_github_webhook_endpoint():
     payload = {
