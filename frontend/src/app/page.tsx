@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { KnowledgeGraphHeader, KnowledgeNode } from "@/components/KnowledgeGraphHeader";
 import { KnowledgeGraphModal } from "@/components/KnowledgeGraphModal";
 import { ChatPanel, ChatMessage } from "@/components/ChatPanel";
@@ -9,6 +9,8 @@ import { ShowcaseModal } from "@/components/ShowcaseModal";
 import { MockInterviewModal } from "@/components/MockInterviewModal";
 import { CheatSheetModal } from "@/components/CheatSheetModal";
 import { ThemeToggle } from "@/components/ThemeToggle";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const INITIAL_NODES: KnowledgeNode[] = [
   {
@@ -152,6 +154,20 @@ export default function CockpitPage() {
   const [testOutput, setTestOutput] = useState<{ passed: boolean; logs: string } | null>(null);
   const [isRunningTests, setIsRunningTests] = useState(false);
 
+  // Sync Knowledge Graph from Backend if available
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/graph`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.topics && data.topics.length > 0) {
+          setNodes(data.topics);
+        }
+      })
+      .catch(() => {
+        // Graceful fallback to default initial nodes
+      });
+  }, []);
+
   const handleSendMessage = async (msg: string) => {
     const userMsg: ChatMessage = {
       id: `u_${Date.now()}`,
@@ -161,6 +177,60 @@ export default function CockpitPage() {
     };
     setMessages((prev) => [...prev, userMsg]);
 
+    try {
+      // Try real FastAPI Backend first
+      const response = await fetch(`${API_BASE_URL}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        let card = undefined;
+        const lower = msg.toLowerCase();
+        if (lower.includes("tag") || lower.includes("número") || lower.includes("binário")) {
+          card = {
+            type: "linkedin" as const,
+            title: "Showcase Profissional Pronto",
+            details: "Rascunho de post do LinkedIn com resumo técnico e links do repositório pronto para publicação.",
+            linkUrl: "https://github.com/marcellopps283/lab-grpc-protobuf-contracts"
+          };
+        } else if (lower.includes("prova") || lower.includes("grpc") || lower.includes("socorro")) {
+          card = {
+            type: "calendar" as const,
+            title: "Google Calendar Bloqueado",
+            details: "Sessão prática agendada para amanhã às 18h30 (30 min livres)",
+            linkUrl: "https://calendar.google.com"
+          };
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `a_${Date.now()}`,
+            role: "assistant",
+            content: data.reply,
+            timestamp: "Agora",
+            actionCard: card
+          }
+        ]);
+
+        // Refresh graph
+        fetch(`${API_BASE_URL}/api/graph`)
+          .then((r) => r.json())
+          .then((g) => {
+            if (g && g.topics) setNodes(g.topics);
+          })
+          .catch(() => {});
+        return;
+      }
+    } catch {
+      // Backend offline -> Fallback to client-side Socratic simulation
+    }
+
+    // Fallback simulation
     const lower = msg.toLowerCase();
     setTimeout(() => {
       let replyContent = "Interessante ponto de vista! Observe como isso se reflete diretamente na performance de rede do seu microserviço.";
@@ -181,7 +251,7 @@ export default function CockpitPage() {
           type: "linkedin" as const,
           title: "Showcase Profissional Pronto",
           details: "Rascunho de post do LinkedIn com resumo técnico e links do repositório pronto para publicação.",
-          linkUrl: "https://github.com/student/lab-grpc"
+          linkUrl: "https://github.com/marcellopps283/lab-grpc-protobuf-contracts"
         };
       }
 
@@ -198,7 +268,7 @@ export default function CockpitPage() {
     }, 600);
   };
 
-  const handleUploadPdf = (file: File) => {
+  const handleUploadPdf = async (file: File) => {
     setMessages((prev) => [
       ...prev,
       {
@@ -206,7 +276,47 @@ export default function CockpitPage() {
         role: "user",
         content: `📄 Upload do arquivo: ${file.name}`,
         timestamp: "Agora"
-      },
+      }
+    ]);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("source_name", file.name);
+
+      const res = await fetch(`${API_BASE_URL}/api/ingest/pdf`, {
+        method: "POST",
+        body: formData
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `a_${Date.now()}`,
+            role: "assistant",
+            content: `✓ **${file.name} processado pelo Gemini 3.5!**\nExtraí ${data.topics_registered?.length || 4} tópicos principais e atualizei seu Knowledge Graph.`,
+            timestamp: "Agora"
+          }
+        ]);
+
+        // Refresh graph
+        fetch(`${API_BASE_URL}/api/graph`)
+          .then((r) => r.json())
+          .then((g) => {
+            if (g && g.topics) setNodes(g.topics);
+          })
+          .catch(() => {});
+        return;
+      }
+    } catch {
+      // Backend offline -> Fallback
+    }
+
+    // Fallback message
+    setMessages((prev) => [
+      ...prev,
       {
         id: `a_${Date.now()}`,
         role: "assistant",
