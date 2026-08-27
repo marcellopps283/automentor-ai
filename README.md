@@ -1,25 +1,25 @@
-# 🎓 AutoMentor AI
+# AutoMentor AI
 
 > **Autonomous AI Study Companion, Live Interactive Notebook & Portfolio Builder**  
 > Built for the **All Things Agentic Hackathon** using **Gemini 3.5 Flash / Pro**, **Google Agent Development Kit (ADK)**, and **Google Cloud**.
 
 ---
 
-## 📌 Overview
+## Overview
 
-**AutoMentor** is a truly autonomous AI study companion designed to remove friction from technical education. It doesn't just answer questions—it actively guides the student through a living workspace:
+**AutoMentor** is an autonomous AI study companion designed to remove friction from technical education. It actively guides students through a living workspace:
 
-1. **📚 Socratic Discovery & Multimodal Ingestion:** Ingests college slides, PDFs, and syllabus topics to extract a structured knowledge graph using Gemini 3.5.
-2. **📓 Autonomous Interactive Notebook (Live AI Canvas):** A reactive workspace where the Mentor autonomously generates theory cells, injects realistic code challenges, inserts intentional bugs for debugging practice, and executes tests in real-time.
-3. **🎯 Gap Detection:** Calibrates current understanding through Socratic questioning to isolate specific knowledge gaps.
-4. **📅 Autonomous Scheduling:** Finds free slots on **Google Calendar** and books focused micro-study sessions.
-5. **🧪 Hands-on Lab Generation:** Generates real **GitHub repositories** with scaffolding, Dockerfiles, and unit tests for the student to clone and solve.
-6. **🤖 Automated PR Review:** Evaluates Pull Requests with Socratic technical feedback directly in GitHub comments.
-7. **🚀 1-Click Showcase:** Drafts technical **LinkedIn articles** and updates the GitHub profile README with verified skill badges upon mastery.
+1. **Socratic Discovery & Multimodal Ingestion:** Ingests college slides, PDFs, and syllabus topics to extract a structured knowledge graph using Gemini 3.5.
+2. **Autonomous Interactive Notebook (Live AI Canvas):** A reactive workspace where the Mentor autonomously generates theory cells, injects realistic code challenges, inserts intentional bugs for debugging practice, and executes tests in real-time.
+3. **Gap Detection:** Calibrates current understanding through Socratic questioning to isolate specific knowledge gaps.
+4. **Autonomous Scheduling:** Finds free slots on **Google Calendar** and books focused micro-study sessions.
+5. **Hands-on Lab Generation:** Generates real **GitHub repositories** with scaffolding, Dockerfiles, and unit tests for the student to clone and solve.
+6. **Automated PR Review:** Evaluates Pull Requests with Socratic technical feedback directly in GitHub comments.
+7. **1-Click Showcase:** Drafts technical **LinkedIn articles** and updates the GitHub profile README with verified skill badges upon mastery.
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```
                                   ┌────────────────────────────────────────────────────────┐
@@ -61,7 +61,7 @@
 
 ---
 
-## 📓 The Autonomous Notebook Engine
+## The Autonomous Notebook Engine
 
 The **Autonomous Interactive Notebook** is the core collaborative canvas where learning happens:
 * **Mentor-Manipulated Cells:** The agent dynamically creates markdown explanations, adds architecture diagrams, and scaffolds code cells with editable syntax.
@@ -71,7 +71,7 @@ The **Autonomous Interactive Notebook** is the core collaborative canvas where l
 
 ---
 
-## 🚀 Quick Start (Local Setup)
+## Quick Start (Local Setup)
 
 ### 1. Backend & CLI
 ```bash
@@ -104,7 +104,7 @@ Open **[http://localhost:3000](http://localhost:3000)** to access the full AutoM
 
 ---
 
-## 🧪 Testing
+## Testing
 
 Run the automated test suite with pytest:
 ```bash
