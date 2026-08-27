@@ -6,6 +6,8 @@ import { KnowledgeGraphModal } from "@/components/KnowledgeGraphModal";
 import { ChatPanel, ChatMessage } from "@/components/ChatPanel";
 import { InteractiveNotebook, NotebookCell } from "@/components/InteractiveNotebook";
 import { ShowcaseModal } from "@/components/ShowcaseModal";
+import { MockInterviewModal } from "@/components/MockInterviewModal";
+import { CheatSheetModal } from "@/components/CheatSheetModal";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const INITIAL_NODES: KnowledgeNode[] = [
@@ -43,7 +45,7 @@ const INITIAL_MESSAGES: ChatMessage[] = [
   {
     id: "m_1",
     role: "assistant",
-    content: "Fala Marcelo! Sou seu **AutoMentor**. Vamos descomplicar seus estudos!\n\nVi que você está estudando **Sistemas Distribuídos com gRPC e Protobuf**. Já preparei seu **Notebook Interativo** na direita com o código esqueleto e os testes unitários prontos.",
+    content: "Fala Marcelo! Sou seu **AutoMentor**. Vamos descomplicar seus estudos!\n\nVi que você está estudando **Sistemas Distribuídos com gRPC e Protobuf**. Já preparei seu **Notebook Interativo** na direita com o código esqueleto, testes unitários e as dicas em 3 camadas prontas.",
     timestamp: "Agora",
     actionCard: {
       type: "calendar",
@@ -107,12 +109,39 @@ def test_validation():
   }
 ];
 
+const SAMPLE_CHEAT_SHEET = `# 📄 Guia de Bolso: Sistemas Distribuídos & gRPC
+> Gerado automaticamente pelo **AutoMentor AI** para revisão de provas e entrevistas.
+
+## 🎯 1. O Modelo Mental
+* **JSON/REST:** Textual, legível por humanos, alto overhead de rede, parsing O(n) em runtime.
+* **gRPC/Protobuf:** Binário, tipagem estrita via contratos \`.proto\`, tags numéricas indexadas, até 10x mais rápido.
+
+## 🛠️ 2. Estrutura do Contrato (.proto)
+\`\`\`protobuf
+syntax = "proto3";
+
+message UserRequest {
+  int32 id = 1;        // Tag 1 (Índice binário)
+  string username = 2; // Tag 2
+  bool is_active = 3;  // Tag 3
+}
+\`\`\`
+
+## ⚠️ 3. Pegadinhas Clássicas em Provas & Entrevistas
+1. **Nunca altere o número da Tag** após publicação em produção (quebra compatibilidade com versões antigas).
+2. **Campos desconhecidos** são preservados no payload binário sem falhar a deserialização.
+3. **HTTP/2 Multiplexing:** Permite centenas de chamadas gRPC concorrentes na mesma conexão TCP.
+`;
+
 export default function CockpitPage() {
   const [nodes, setNodes] = useState<KnowledgeNode[]>(INITIAL_NODES);
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
   const [cells, setCells] = useState<NotebookCell[]>(INITIAL_CELLS);
   
   const [isGraphModalOpen, setIsGraphModalOpen] = useState(false);
+  const [isMockInterviewOpen, setIsMockInterviewOpen] = useState(false);
+  const [isCheatSheetOpen, setIsCheatSheetOpen] = useState(false);
+
   const [showcaseData, setShowcaseData] = useState<{ isOpen: boolean; topic: string; post: string; repo: string }>({
     isOpen: false,
     topic: "",
@@ -132,7 +161,6 @@ export default function CockpitPage() {
     };
     setMessages((prev) => [...prev, userMsg]);
 
-    // Check if user is answering or asking
     const lower = msg.toLowerCase();
     setTimeout(() => {
       let replyContent = "Interessante ponto de vista! Observe como isso se reflete diretamente na performance de rede do seu microserviço.";
@@ -141,7 +169,6 @@ export default function CockpitPage() {
       if (lower.includes("tag") || lower.includes("número") || lower.includes("binário") || lower.includes("tamanho")) {
         replyContent = "🎉 **Exato!** As tags numéricas funcionam como ponteiros indexados diretamente em C++/Rust, eliminando o overhead de string matching do JSON.\n\nAtualizei seu Knowledge Graph para **Mastered (100%)**!";
         
-        // Update knowledge graph
         setNodes((prev) =>
           prev.map((n) =>
             n.topic_id === "grpc_contracts"
@@ -193,18 +220,36 @@ export default function CockpitPage() {
     setCells((prev) => prev.map((c) => (c.id === id ? { ...c, content: newContent } : c)));
   };
 
+  const handleScheduleReview = (topicName: string) => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `a_${Date.now()}`,
+        role: "assistant",
+        content: `📅 **Revisão Agendada!** Reservei um bloco de 20 minutos no seu Google Calendar para amanhã às 19h00 para revisar **${topicName}** antes do declínio da curva de retenção.`,
+        timestamp: "Agora",
+        actionCard: {
+          type: "calendar",
+          title: "Google Calendar: Repetição Espaçada",
+          details: `Revisão de Ebbinghaus: ${topicName} (20 min)`,
+          linkUrl: "https://calendar.google.com"
+        }
+      }
+    ]);
+  };
+
   const handleRunTests = (code: string) => {
     setIsRunningTests(true);
     setTestOutput(null);
 
     setTimeout(() => {
       setIsRunningTests(false);
-      const isBuggy = code.includes("BUG INJETADO");
+      const isBuggy = code.includes("BUG ADAPTATIVO") || code.includes("BUG INJETADO");
       
       if (isBuggy) {
         setTestOutput({
           passed: false,
-          logs: `============================= FAILURES =============================\n__________________________ test_serialization __________________________\nE   DeadlockError: Channel never closed before consumer loop exit.\nE   AssertionError: assert False\n=========================== 1 failed in 0.04s ===========================`
+          logs: `============================= FAILURES =============================\n__________________________ test_serialization __________________________\nE   AssertionError: Schema Mismatch / Invalid Key Format detected in payload.\nE   AssertionError: assert False\n=========================== 1 failed in 0.04s ===========================`
         });
       } else {
         setTestOutput({
@@ -215,6 +260,8 @@ export default function CockpitPage() {
     }, 800);
   };
 
+  const activeTopicScore = nodes.find((n) => n.topic_id === "grpc_contracts")?.mastery_score || 0.4;
+
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-background text-foreground">
       {/* Top Header */}
@@ -223,6 +270,8 @@ export default function CockpitPage() {
           <KnowledgeGraphHeader
             nodes={nodes}
             onOpenFullGraph={() => setIsGraphModalOpen(true)}
+            onOpenMockInterview={() => setIsMockInterviewOpen(true)}
+            onScheduleReview={handleScheduleReview}
           />
         </div>
         <div className="px-4 py-2 border-l border-border flex items-center gap-2">
@@ -248,11 +297,13 @@ export default function CockpitPage() {
         <div className="flex-1 h-full">
           <InteractiveNotebook
             topicTitle="Sistemas Distribuídos: Contratos e Tipagem com gRPC & Protobuf"
+            masteryScore={activeTopicScore}
             cells={cells}
             onUpdateCell={handleUpdateCell}
             onRunTests={handleRunTests}
             testOutput={testOutput}
             isRunningTests={isRunningTests}
+            onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
           />
         </div>
       </div>
@@ -262,6 +313,19 @@ export default function CockpitPage() {
         isOpen={isGraphModalOpen}
         onClose={() => setIsGraphModalOpen(false)}
         nodes={nodes}
+      />
+
+      <MockInterviewModal
+        isOpen={isMockInterviewOpen}
+        onClose={() => setIsMockInterviewOpen(false)}
+        topicName="Sistemas Distribuídos & gRPC"
+      />
+
+      <CheatSheetModal
+        isOpen={isCheatSheetOpen}
+        onClose={() => setIsCheatSheetOpen(false)}
+        topicTitle="Sistemas Distribuídos & gRPC"
+        markdownContent={SAMPLE_CHEAT_SHEET}
       />
 
       <ShowcaseModal

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Network, Sparkles, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { Network, Mic, Sparkles, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { RetentionWidget } from "./RetentionWidget";
 
 export interface KnowledgeNode {
   topic_id: string;
@@ -14,11 +14,35 @@ export interface KnowledgeNode {
 interface KnowledgeGraphHeaderProps {
   nodes: KnowledgeNode[];
   onOpenFullGraph: () => void;
+  onOpenMockInterview: () => void;
+  onScheduleReview: (topicName: string) => void;
 }
 
-export function KnowledgeGraphHeader({ nodes, onOpenFullGraph }: KnowledgeGraphHeaderProps) {
-  const masteredCount = nodes.filter(n => n.status === "mastered").length;
-  const gapCount = nodes.filter(n => n.status === "gap").length;
+export function KnowledgeGraphHeader({
+  nodes,
+  onOpenFullGraph,
+  onOpenMockInterview,
+  onScheduleReview
+}: KnowledgeGraphHeaderProps) {
+  const masteredCount = nodes.filter((n) => n.status === "mastered").length;
+  const gapCount = nodes.filter((n) => n.status === "gap").length;
+
+  const decayingTopics = [
+    {
+      topic_id: "grpc_contracts",
+      topic_name: "Contratos gRPC & Protobuf",
+      days_since_study: 3,
+      retention_pct: 68,
+      decay_risk: "medium" as const
+    },
+    {
+      topic_id: "jwt_refresh",
+      topic_name: "Autenticação JWT",
+      days_since_study: 6,
+      retention_pct: 42,
+      decay_risk: "high" as const
+    }
+  ];
 
   return (
     <div className="bg-card border-b border-border px-4 py-2 flex items-center justify-between gap-4">
@@ -33,22 +57,18 @@ export function KnowledgeGraphHeader({ nodes, onOpenFullGraph }: KnowledgeGraphH
 
         <div className="h-4 w-px bg-border hidden sm:block" />
 
-        {/* Live Mastery Capsule */}
-        <div className="hidden md:flex items-center gap-2 text-xs">
-          <span className="flex items-center gap-1 text-green-500 font-medium bg-green-500/10 px-2 py-0.5 rounded-full">
-            <CheckCircle size={12} /> {masteredCount} Dominados
-          </span>
-          {gapCount > 0 && (
-            <span className="flex items-center gap-1 text-red-500 font-medium bg-red-500/10 px-2 py-0.5 rounded-full">
-              <AlertCircle size={12} /> {gapCount} Lacuna{gapCount > 1 ? "s" : ""}
-            </span>
-          )}
-        </div>
+        {/* Retention Analytics Widget */}
+        <RetentionWidget
+          streakDays={4}
+          overallRetention={84}
+          decayingTopics={decayingTopics}
+          onScheduleReview={onScheduleReview}
+        />
       </div>
 
       {/* Center: Mini-Map Skill Pills */}
-      <div className="hidden lg:flex items-center gap-1.5 overflow-x-auto max-w-xl py-1">
-        {nodes.slice(0, 5).map((node) => {
+      <div className="hidden xl:flex items-center gap-1.5 overflow-x-auto max-w-lg py-1">
+        {nodes.slice(0, 4).map((node) => {
           const pillColor = {
             mastered: "border-green-500/30 bg-green-500/10 text-green-400",
             gap: "border-red-500/30 bg-red-500/10 text-red-400",
@@ -69,14 +89,24 @@ export function KnowledgeGraphHeader({ nodes, onOpenFullGraph }: KnowledgeGraphH
         })}
       </div>
 
-      {/* Right: Full Graph Button */}
-      <button
-        onClick={onOpenFullGraph}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-muted text-foreground hover:bg-muted/80 border border-border transition-all shadow-sm"
-      >
-        <Network size={14} className="text-blue-500" />
-        <span className="hidden sm:inline">Explorar</span> Grafo 2D
-      </button>
+      {/* Right: Actions */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onOpenMockInterview}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20 transition-all shadow-sm"
+        >
+          <Mic size={13} className="fill-current animate-pulse" />
+          <span>Simular Entrevista</span>
+        </button>
+
+        <button
+          onClick={onOpenFullGraph}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-muted text-foreground hover:bg-muted/80 border border-border transition-all shadow-sm"
+        >
+          <Network size={14} className="text-blue-500" />
+          <span className="hidden sm:inline">Explorar</span> Grafo 2D
+        </button>
+      </div>
     </div>
   );
 }
