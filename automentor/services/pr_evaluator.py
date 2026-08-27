@@ -5,6 +5,7 @@ PR Evaluator Service: Analyzes student Pull Request code diffs and provides Socr
 from typing import Dict, Any, Optional
 from automentor.config import GEMINI_API_KEY, GITHUB_TOKEN, DEMO_MODE
 from automentor.tools import update_knowledge_node, generate_linkedin_showcase, memory_store
+from automentor.prompts import PR_EVALUATION_SYSTEM_INSTRUCTION
 
 class PREvaluator:
     def __init__(self):
@@ -19,19 +20,24 @@ class PREvaluator:
         if self.api_key:
             try:
                 from google import genai
+                from google.genai import types
                 client = genai.Client(api_key=self.api_key)
                 prompt = (
-                    f"Você é um Tech Lead e Mentor Socrático. Avalie o seguinte diff de código enviado pelo aluno para o desafio de '{topic_name}':\n\n"
+                    f"Avalie o seguinte diff de código enviado pelo aluno para o desafio de '{topic_name}' (PR: '{pr_title}'):\n\n"
                     f"```diff\n{code_diff}\n```\n\n"
-                    f"Responda em formato JSON com as seguintes chaves:\n"
-                    f"- 'passed' (boolean): se a implementação atende aos requisitos\n"
+                    f"Retorne um JSON estrito com:\n"
+                    f"- 'passed' (boolean): true se a implementação atende aos requisitos dos testes\n"
                     f"- 'score' (float de 0.0 a 1.0): nota de qualidade técnica\n"
-                    f"- 'feedback' (string): comentário construtivo, amigável e socrático para o PR\n"
+                    f"- 'feedback' (string): comentário construtivo e socrático para o PR\n"
                     f"- 'key_learnings' (string): resumo dos pontos fortes para o LinkedIn\n"
                 )
                 response = client.models.generate_content(
                     model="gemini-3.5-flash",
-                    contents=prompt
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction=PR_EVALUATION_SYSTEM_INSTRUCTION,
+                        response_mime_type="application/json"
+                    )
                 )
                 # Parse or handle response
             except Exception as e:

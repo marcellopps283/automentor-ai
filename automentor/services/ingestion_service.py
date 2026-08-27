@@ -7,6 +7,7 @@ import re
 from typing import List, Dict, Any, Optional
 from automentor.config import GEMINI_API_KEY
 from automentor.tools import update_knowledge_node
+from automentor.prompts import SYLLABUS_INGESTION_SYSTEM_INSTRUCTION
 
 class IngestionService:
     def __init__(self):
@@ -39,6 +40,7 @@ class IngestionService:
         if self.api_key:
             try:
                 from google import genai
+                from google.genai import types
                 client = genai.Client(api_key=self.api_key)
                 prompt = (
                     f"Analise o seguinte material de aula/ementa de faculdade ('{source_title}') e extraia "
@@ -49,7 +51,10 @@ class IngestionService:
                 )
                 response = client.models.generate_content(
                     model="gemini-3.5-flash",
-                    contents=prompt
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction=SYLLABUS_INGESTION_SYSTEM_INSTRUCTION
+                    )
                 )
                 if response.text:
                     for line in response.text.splitlines():
