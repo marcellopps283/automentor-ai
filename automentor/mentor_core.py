@@ -8,7 +8,7 @@ from automentor.prompts import MENTOR_SYSTEM_INSTRUCTION
 from automentor.tools import MENTOR_TOOLS, memory_store
 
 class MentorBrain:
-    def __init__(self, model_name: str = "gemini-2.0-flash"):
+    def __init__(self, model_name: str = "gemini-3.5-flash"):
         self.model_name = model_name
         self.api_key = GEMINI_API_KEY
         self.client = None

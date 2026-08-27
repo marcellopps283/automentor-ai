@@ -1,7 +1,7 @@
 # 🎓 AutoMentor AI
 
 > **Autonomous AI Study Companion & Portfolio Builder**  
-> Built for the **All Things Agentic Hackathon** using **Gemini 2.0 / 1.5**, **Google Agent Development Kit (ADK)**, and **Google Cloud**.
+> Built for the **All Things Agentic Hackathon** using **Gemini 3.5 Flash / Pro**, **Google Agent Development Kit (ADK)**, and **Google Cloud**.
 
 ---
 
@@ -20,8 +20,8 @@
 
 ## 🏗️ Architecture
 
-- **AI Brain:** Gemini 2.0 Flash / Pro & Gemini Multimodal Live API
-- **Orchestration:** Google Agent Development Kit (ADK)
+- **AI Brain:** Gemini 3.5 Flash / Pro & Gemini Live API
+- **Orchestration:** Google Agent Development Kit (ADK) / Google GenAI SDK
 - **Persistence & Knowledge Graph:** Google Cloud Firestore & Cloud Storage
 - **Compute:** Google Cloud Run (Serverless)
 - **Background Autonomy:** Cloud Scheduler & Cloud Tasks
