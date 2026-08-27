@@ -89,7 +89,22 @@ class MentorBrain:
         user_lower = user_input.lower()
         tools_run = []
 
-        if "grpc" in user_lower or "protobuf" in user_lower or "distribuídos" in user_lower or "prova" in user_lower:
+        # Check for mastery explanation first
+        if any(k in user_lower for k in ["tag", "varint", "parsing", "overhead", "binário"]) and any(k in user_lower for k in ["json", "protobuf", "serializa", "texto"]):
+            from automentor.tools import update_knowledge_node, generate_linkedin_showcase
+            res_node = update_knowledge_node("grpc_contracts", "Contratos gRPC & Protobuf", "mastered", 0.95, "Conceito dominado com clareza técnica.")
+            res_show = generate_linkedin_showcase("Sistemas Distribuídos com gRPC & Protobuf", "Serialização binária eficiente, definição de contratos estritos e benchmarking com REST.")
+            tools_run.extend([res_node, res_show])
+
+            reply = (
+                "Perfeito! Você acertou em cheio no ponto central: o JSON exige parsing de texto caractere por caractere em runtime, "
+                "enquanto o Protobuf serializa os campos em binário indexados por números de tag (tags numéricas fixas), eliminando overhead.\n\n"
+                "🎉 **Habilidade Consolidada!** Atualizei seu score de proficiência para **95% (Mastered)** no seu Knowledge Graph.\n\n"
+                "Já gerei uma sugestão de post técnico para o seu LinkedIn documentando esse seu lab prático. Quer dar uma olhada e aprovar?"
+            )
+            return reply, tools_run
+
+        elif "grpc" in user_lower or "protobuf" in user_lower or "distribuídos" in user_lower or "prova" in user_lower:
             from automentor.tools import update_knowledge_node, schedule_study_session, create_github_lab
             
             # Execute the triad of autonomous tools
@@ -109,20 +124,6 @@ class MentorBrain:
                 f"• {res_cal.splitlines()[0]} ({res_cal.splitlines()[2]})\n"
                 f"• {res_lab.splitlines()[0]} ({res_lab.splitlines()[1]})\n\n"
                 "Quando estiver pronto, me conta sua resposta ou clona o repo para começarmos!"
-            )
-            return reply, tools_run
-
-        elif "json" in user_lower or "binário" in user_lower or "serializa" in user_lower or "contrato" in user_lower:
-            from automentor.tools import update_knowledge_node, generate_linkedin_showcase
-            res_node = update_knowledge_node("grpc_contracts", "Contratos gRPC & Protobuf", "mastered", 0.95, "Conceito dominado com clareza técnica.")
-            res_show = generate_linkedin_showcase("Sistemas Distribuídos com gRPC & Protobuf", "Serialização binária eficiente, definição de contratos estritos e benchmarking com REST.")
-            tools_run.extend([res_node, res_show])
-
-            reply = (
-                "Perfeito! Você acertou em cheio no ponto central: o JSON exige parsing de texto caractere por caractere em runtime, "
-                "enquanto o Protobuf serializa os campos em binário indexados por números de tag (tags numéricas fixas), eliminando overhead.\n\n"
-                "🎉 **Habilidade Consolidada!** Atualizei seu score de proficiência para **95% (Mastered)** no seu Knowledge Graph.\n\n"
-                "Já gerei uma sugestão de post técnico para o seu LinkedIn documentando esse seu lab prático. Quer dar uma olhada e aprovar?"
             )
             return reply, tools_run
 

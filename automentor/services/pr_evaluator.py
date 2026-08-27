@@ -40,9 +40,14 @@ class PREvaluator:
         # Deterministic Evaluation (Fallback & Demo)
         code_lower = code_diff.lower()
         
-        # Check basic completion indicators
-        has_logic = any(k in code_lower for k in ["def ", "return ", "class ", "import ", "func ", "export "])
-        has_tests_passed = "error" not in code_lower and "fail" not in code_lower
+        # Extract only added lines from diff (+ lines), ignoring removed lines (- lines)
+        added_lines = [line[1:].strip() for line in code_diff.splitlines() if line.startswith("+") and not line.startswith("+++")]
+        added_code = "\n".join(added_lines).lower() if added_lines else code_lower
+
+        # Check completion indicators on the student's actual added code
+        is_stub = "return none" in added_code or "notimplementederror" in added_code or "pass" == added_code.strip()
+        has_logic = any(k in added_code for k in ["def ", "return ", "class ", "import ", "func ", "export "]) and not is_stub
+        has_tests_passed = "error" not in added_code and "fail" not in added_code and has_logic
 
         if has_logic:
             score = 0.95
