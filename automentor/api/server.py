@@ -26,8 +26,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include Webhooks Router
+# Include Webhooks Router (supports both /webhooks and /api/webhooks)
 app.include_router(webhooks_router)
+app.include_router(webhooks_router, prefix="/api")
 
 # Request Models
 class ChatRequest(BaseModel):
@@ -40,13 +41,15 @@ class ChatResponse(BaseModel):
     mode: str
 
 class IngestTextRequest(BaseModel):
-    content: str
+    content: Optional[str] = None
+    raw_text: Optional[str] = None
     source_name: Optional[str] = "Documento de Aula"
 
 @app.get("/")
 def root():
     return {
         "service": "AutoMentor AI API",
+        "name": "AutoMentor AI",
         "status": "online",
         "model": "Gemini 3.5 Flash",
         "framework": "Google Agent Development Kit (ADK)",
@@ -62,7 +65,7 @@ def root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy", "service": "automentor-api"}
 
 @app.post("/api/chat", response_model=ChatResponse)
 def chat_with_mentor(req: ChatRequest):
@@ -91,7 +94,8 @@ def ingest_text_material(req: IngestTextRequest):
     """
     Ingests raw text (syllabus, notes) and extracts concepts into the Knowledge Graph.
     """
-    topics = ingestion_service.parse_syllabus(req.content, req.source_name or "Texto de Estudo")
+    text_content = req.content or req.raw_text or ""
+    topics = ingestion_service.parse_syllabus(text_content, req.source_name or "Texto de Estudo")
     return {
         "status": "success",
         "source": req.source_name,
