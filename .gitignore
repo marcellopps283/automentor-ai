@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.pytest_cache/
 
 # C extensions
 *.so
@@ -54,9 +55,10 @@ out/
 Thumbs.db
 
 # Credentials & Service Accounts
-*.json
-!package.json
-!tsconfig.json
 service-account*.json
 credentials*.json
 token*.json
+
+# Video temp recordings
+recordings/
+*.mp4
