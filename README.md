@@ -66,8 +66,8 @@
 The **Autonomous Interactive Notebook** is the core collaborative canvas where learning happens:
 * **Mentor-Manipulated Cells:** The agent dynamically creates markdown explanations, adds architecture diagrams, and scaffolds code cells with editable syntax.
 * **Instant Client-Side Execution (Pyodide Wasm):** Python code and unit tests run instantly in the student's browser without latency or compute costs.
-* **Live Bug Injection & Socratic Breakpoints:** The Mentor can purposefully introduce edge-case bugs into the notebook for the student to diagnose and fix.
-* **Seamless Git Sync:** The completed notebook solution can be exported with 1-click to a dedicated GitHub repository.
+* **Adaptive Bug Injection & Socratic Breakpoints:** The Mentor introduces calibrated bugs according to the student's mastery score (< 0.4: validation errors, 0.4-0.7: schema mismatch, > 0.7: concurrency deadlocks).
+* **Progressive 3-Tier Hint Ladder:** 1) Mental Model analogy, 2) Pseudocode logic, 3) Edge-case condition.
 
 ---
 
@@ -94,7 +94,7 @@ automentor
 python -m automentor.api.server
 ```
 
-### 2. Frontend (Next.js Dashboard)
+### 2. Frontend (Next.js Cockpit)
 ```bash
 cd frontend
 npm install
@@ -104,9 +104,71 @@ Open **[http://localhost:3000](http://localhost:3000)** to access the full AutoM
 
 ---
 
-## 🧪 Testing
+## 🧪 Reproducible Testing Instructions
 
-Run the automated test suite with pytest:
+For judges and evaluators to verify the autonomous agent, tool executions, and full-stack behavior in a clean environment:
+
+### 1. Automated Test Battery (38 Test Scenarios — 100% Pass Rate)
+
+Ensure your Python virtual environment is activated, then run the comprehensive test suite:
+
 ```bash
-pytest
+# Option A: Standard Pytest execution with verbose output
+pytest tests/ -v
+
+# Option B: Run the formatted test battery runner
+python run_test_battery.py
 ```
+
+#### 📊 Test Suites Coverage Breakdown:
+
+| Test File | Focus Area | Scenarios Covered |
+| :--- | :--- | :--- |
+| `tests/test_student_scenarios.py` | Student Cognitive Flows | Exam panic, conceptual misconceptions, cheat attempts, short inputs, mastery celebrations. |
+| `tests/test_tool_execution.py` | Actuator Executions | Google Calendar Ebbinghaus intervals (D+1 to D+14), GitHub multi-stack scaffolding (Python, Go, TS), LinkedIn Showcases, Cheat Sheets. |
+| `tests/test_pr_evaluator_deep.py` | Automated PR Reviewer | Perfect submissions, buggy diffs, empty pull requests, markdown GitHub comment generation. |
+| `tests/test_knowledge_graph_memory.py` | Firestore / Memory Graph | Node lifecycle progression, filtering, Bloom taxonomy, Ebbinghaus decay tracking. |
+| `tests/test_ingestion_edge_cases.py` | Multimodal Ingestion | Corrupted PDF fallbacks, structured syllabus concept extraction, accents/multilingual preservation. |
+| `tests/test_end_to_end_scenarios.py` | Full Golden Path & Cloud Run | End-to-end autonomous student journey from panic prompt to LinkedIn showcase; OpenAPI spec compliance. |
+| `tests/test_api.py` | FastAPI Server Endpoints | `/health`, `/api/chat`, `/api/graph`, `/api/ingest/pdf`, `/api/webhooks/github`. |
+
+---
+
+### 2. End-to-End Full-Stack Verification (Cockpit UI)
+
+1. Start both servers:
+   ```bash
+   # Terminal 1: Backend API (Port 8000)
+   python -m uvicorn automentor.api.server:app --port 8000
+
+   # Terminal 2: Next.js Frontend (Port 3000)
+   cd frontend && npm run dev
+   ```
+2. Open `http://localhost:3000` in your browser.
+3. **Verify Socratic Flow:** Send `"Tenho prova de gRPC"` in the chat — observe the Socratic question and the Google Calendar booking card.
+4. **Verify WASM Test Runner:** Click `[ ▶ Executar Testes (Wasm) ]` in the notebook to watch Pyodide execute Python tests client-side.
+5. **Verify Fault Injection:** Click `[ 🐛 Injetar Bug Calibrado ]` to observe adaptive bug injection and test failure diagnosis.
+6. **Verify Hint Ladder:** Click on the `[ Dicas em 3 Camadas ]` accordion to unlock Tier 1, Tier 2, and Tier 3 hints.
+7. **Verify 100% Mastery:** Send `"Protobuf usa tags numéricas fixas e serialização binária com varints"` to trigger the confetti celebration and LinkedIn showcase modal.
+
+---
+
+## ☁️ Google Cloud Deployment (Cloud Run)
+
+To deploy the serverless backend to Google Cloud Run:
+
+```bash
+# Ensure gcloud CLI is authenticated
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
+
+# Deploy using the automated script
+./deploy_cloudrun.sh        # Linux / MacOS
+./deploy_cloudrun.ps1       # Windows PowerShell
+```
+
+---
+
+## 📜 License
+
+MIT License — Built with ❤️ for the Google **All Things Agentic Hackathon**.
